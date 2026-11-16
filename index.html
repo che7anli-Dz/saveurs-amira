@@ -616,7 +616,7 @@ function saveDish(){
       var path = rowId + "/" + Date.now() + ".jpg";
       resizePhoto(file, function(blob){
         sb.storage.from("amira-photos").upload(path, blob, {contentType:"image/jpeg"}).then(function(res){
-          if(res.error){ toast(isAr() ? "⚠️ التصويرة ما ترفعاتش — عاود جرّب" : "⚠️ Photo non envoyée — réessaie", 5000); return; }
+          if(res.error){ toast((isAr() ? "⚠️ التصويرة ما ترفعاتش: " : "⚠️ Photo non envoyée : ") + res.error.message, 8000); return; }
           finish(sb.storage.from("amira-photos").getPublicUrl(path).data.publicUrl);
         });
       });
