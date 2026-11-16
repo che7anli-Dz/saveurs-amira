@@ -494,10 +494,10 @@ function orderMsg(){
   for(var k in cart){
     var d = dishById(k);
     if(!d) continue;
-    lines.push("• " + cart[k] + "× " + (d.fr || d.ar));
+    lines.push("• " + cart[k] + "× " + (d.ar || d.fr));
   }
-  var head = isAr() ? "سلام Saveurs Amira، حابة نطلب:" : "Bonjour Saveurs Amira, je souhaite commander :";
-  var note = isAr() ? "عطيني السعر في الخاص من فضلك" : "Merci de me confirmer le prix en DM";
+  var head = "سلام Saveurs Amira، حابة نطلب:";
+  var note = "عطيني السعر في الخاص من فضلك";
   return head + "\n" + lines.join("\n") + "\n" + note;
 }
 function fallbackCopy(t){
@@ -616,7 +616,7 @@ function saveDish(){
       var path = rowId + "/" + Date.now() + ".jpg";
       resizePhoto(file, function(blob){
         sb.storage.from("amira-photos").upload(path, blob, {contentType:"image/jpeg"}).then(function(res){
-          if(res.error){ toast("Photo : " + res.error.message); finish(document.getElementById("addPhotoPrev").getAttribute("data-url") || ""); return; }
+          if(res.error){ toast(isAr() ? "⚠️ التصويرة ما ترفعاتش — عاود جرّب" : "⚠️ Photo non envoyée — réessaie", 5000); return; }
           finish(sb.storage.from("amira-photos").getPublicUrl(path).data.publicUrl);
         });
       });
@@ -898,6 +898,15 @@ document.getElementById("setSave").addEventListener("click", function(){
 });
 document.getElementById("addCat").addEventListener("change", function(){
   document.getElementById("addCatNew").style.display = (this.value === "__new__") ? "block" : "none";
+});
+// Live preview: picking a photo shows it in the form immediately,
+// so the owner sees the new photo BEFORE saving (no more "nothing changed").
+document.getElementById("addPhoto").addEventListener("change", function(){
+  var f = this.files[0];
+  if(!f) return;
+  var prev = document.getElementById("addPhotoPrev");
+  prev.src = URL.createObjectURL(f);
+  prev.style.display = "block";
 });
 document.getElementById("addDelete").addEventListener("click", function(){
   var id = document.getElementById("addId").value;
