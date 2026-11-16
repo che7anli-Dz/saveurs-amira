@@ -613,12 +613,24 @@ function saveDish(){
     };
     var file = document.getElementById("addPhoto").files[0];
     if(file){
-      var path = rowId + "/" + Date.now() + ".jpg";
       resizePhoto(file, function(blob){
-        sb.storage.from("amira-photos").upload(path, blob, {contentType:"image/jpeg"}).then(function(res){
-          if(res.error){ toast((isAr() ? "⚠️ التصويرة ما ترفعاتش: " : "⚠️ Photo non envoyée : ") + res.error.message, 8000); return; }
-          finish(sb.storage.from("amira-photos").getPublicUrl(path).data.publicUrl);
-        });
+        // One automatic retry: a photo upload over a mobile connection can
+        // drop once and succeed on the second try — only then show the error.
+        // Each try uses a fresh path (no upsert), so a try that reached the
+        // server but lost its response never blocks the next one.
+        var tries = 0;
+        var doUpload = function(){
+          tries++;
+          var path = rowId + "/" + Date.now() + ".jpg";
+          sb.storage.from("amira-photos").upload(path, blob, {contentType:"image/jpeg"}).then(function(res){
+            if(res.error){
+              if(tries < 2){ setTimeout(doUpload, 1500); return; }
+              toast((isAr() ? "⚠️ التصويرة ما ترفعاتش: " : "⚠️ Photo non envoyée : ") + res.error.message, 8000); return;
+            }
+            finish(sb.storage.from("amira-photos").getPublicUrl(path).data.publicUrl);
+          });
+        };
+        doUpload();
       });
     } else finish(document.getElementById("addPhotoPrev").getAttribute("data-url") || "");
   };
